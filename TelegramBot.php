@@ -1281,12 +1281,12 @@ class telegramBot
         if (!empty($this->triggerHttp) && function_exists($this->triggerHttp)) {
             call_user_func($this->triggerHttp, $this->lastResponse);
         }
-        if(!$this->lastResponse["ok"]) {
+        /*if(!$this->lastResponse["ok"]) {
             if(array_key_exists("parameters", $this->lastResponse) && array_key_exists("retry_after", $this->lastResponse["parameters"])) {
                 sleep($this->lastResponse["parameters"]["retry_after"]);
                 return $this->sendRequest($method, $params);
             }
-        }
+        }*/
         return $this->lastResponse;
     }
 
