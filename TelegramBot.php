@@ -1274,10 +1274,27 @@ class telegramBot
         return $output;
     }
 
+    private function url_post_contents($Url, $params)
+    {
+        if (!function_exists('curl_init')) {
+            die('CURL is not installed!');
+        }
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $Url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $output = curl_exec($ch);
+        curl_close($ch);
+        return $output;
+    }
+
     private function sendRequest($method, $params)
     {
         $this->lastUrl = $this->baseURL . $method . '?' . http_build_query($params);
-        $this->lastResponse = json_decode($this->url_get_contents($this->baseURL . $method . '?' . http_build_query($params)), true);
+        // $this->lastResponse = json_decode($this->url_get_contents($this->baseURL . $method . '?' . http_build_query($params)), true);
+        $this->lastResponse = json_decode($this->url_post_contents($this->baseURL . $method, http_build_query($params)), true);
         if (!empty($this->triggerHttp) && function_exists($this->triggerHttp)) {
             call_user_func($this->triggerHttp, $this->lastResponse);
         }
