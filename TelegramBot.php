@@ -1378,7 +1378,7 @@ class telegramBot
 
         $data .= '--' . $mime_boundary . $eol;
         /*$data .= 'Content-Disposition: form-data; name="chat_id"' . $eol . $eol;
-        $data .= "-20707046" . $eol;
+        $data .= "<id>" . $eol;
         $data .= '--' . $mime_boundary . $eol;*/
         $data .= 'Content-Disposition: form-data; name="' . $key[$method] . '"; filename="' . basename($filename) . '"' . $eol;
         $data .= 'Content-Type: text/plain' . $eol;
