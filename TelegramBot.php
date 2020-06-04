@@ -937,6 +937,18 @@ class telegramBot
     }
 
     /**
+     * Use this method to change the list of the bot's commands.
+     *
+     * @param array $commands
+     * @return Array
+     */
+    public function setMyCommands($commands = array())
+    {
+        $params = compact('commands');
+        return $this->sendRequest('setMyCommands', $params);
+    }
+
+    /**
      * Edit text message sent by the bot
      *
      * @param int $chat_id
