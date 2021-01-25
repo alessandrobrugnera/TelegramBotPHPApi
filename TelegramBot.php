@@ -4,11 +4,25 @@ require 'TelegramException.php';
 class telegramBot
 {
     const BASE_URL = 'https://api.telegram.org/bot';
-    protected $token;
+    /**
+     * @var string
+     */
+    private $baseURL;
+    /**
+     * @var string
+     */
+    private $lastUrl;
+    /**
+     * @var array
+     */
+    private $lastResponse;
+    /**
+     * @var null
+     */
+    private $triggerHttp;
 
-    public function __construct($token)
+    public function __construct(protected string $token)
     {
-        $this->token = $token;
         if (is_null($this->token))
             throw new TelegramException('Required "token" key not supplied');
         $this->baseURL = self::BASE_URL . $this->token . '/';
@@ -126,17 +140,17 @@ class telegramBot
      *
      * @link https://core.telegram.org/bots/api#sendmessage
      *
-     * @param int $chat_id
+     * @param int|string $chat_id
      * @param string $text
-     * @param string $parse_mode
+     * @param string|null $parse_mode
      * @param bool $disable_web_page_preview
      * @param bool $disable_notification
-     * @param int $reply_to_message_id
-     * @param InlineKeyboardMarkup|ReplyKeyboardMarkup|ReplyKeyboardRemove|ForceReply $reply_markup
+     * @param int|null $reply_to_message_id
+     * @param null $reply_markup
      *
      * @return mixed[]
      */
-    public function sendMessage($chat_id, $text, $parse_mode = null, $disable_web_page_preview = false, $disable_notification = false, $reply_to_message_id = null, $reply_markup = null)
+    public function sendMessage(int|string $chat_id, string $text, ?string $parse_mode = null, bool $disable_web_page_preview = false, bool $disable_notification = false, ?int $reply_to_message_id = null, $reply_markup = null)
     {
         $params = compact('chat_id', 'text', 'parse_mode', 'disable_web_page_preview', 'disable_notification', 'reply_to_message_id', 'reply_markup');
         return $this->sendRequest('sendMessage', $params);
@@ -147,17 +161,40 @@ class telegramBot
      *
      * @link https://core.telegram.org/bots/api#forwardmessage
      *
-     * @param int $chat_id
-     * @param int $from_chat_id
+     * @param int|string $chat_id
+     * @param int|string $from_chat_id
      * @param int $message_id
      * @param bool $disable_notification
      *
      * @return mixed[]
      */
-    public function forwardMessage($chat_id, $from_chat_id, $message_id, $disable_notification = false)
+    public function forwardMessage(int|string $chat_id, int|string $from_chat_id, int $message_id, bool $disable_notification = false)
     {
         $params = compact('chat_id', 'from_chat_id', 'message_id', 'disable_notification');
         return $this->sendRequest('forwardMessage', $params);
+    }
+
+    /**
+     * Use this method to forward messages of any kind
+     *
+     * @link https://core.telegram.org/bots/api#forwardmessage
+     *
+     * @param int|string $chat_id
+     * @param int|string $from_chat_id
+     * @param int $message_id
+     * @param string|null $caption
+     * @param string|null $parse_mode
+     * @param array|null $caption_entities
+     * @param bool $disable_notification
+     * @param int|null $reply_to_message_id
+     * @param bool $allow_sending_without_reply
+     * @param $reply_markup
+     * @return mixed[]
+     */
+    public function copyMessage(int|string $chat_id, int|string $from_chat_id, int $message_id, ?string $caption = null, ?string $parse_mode = null, ?array $caption_entities = null, bool $disable_notification = false, ?int $reply_to_message_id = null, bool $allow_sending_without_reply = false, $reply_markup = null)
+    {
+        $params = compact('chat_id', 'from_chat_id', 'message_id', 'caption', 'parse_mode', 'caption_entities', 'disable_notification', 'reply_to_message_id', 'allow_sending_without_reply', 'reply_markup');
+        return $this->sendRequest('copyMessage', $params);
     }
 
     /**
@@ -175,7 +212,7 @@ class telegramBot
      *
      * @return mixed[]
      */
-    public function sendPhoto($chat_id, $photo, $caption = null, $parse_mode = null, $disable_notification = false, $reply_to_message_id = null, $reply_markup = null)
+    public function sendPhoto(int|string $chat_id, string $photo, ?string $caption = null, ?string $parse_mode = null, bool $disable_notification = false, ?int $reply_to_message_id = null, $reply_markup = null)
     {
         $data = compact('chat_id', 'photo', 'caption', 'parse_mode', 'disable_notification', 'reply_to_message_id', 'reply_markup');
         if (!file_exists($photo) || filter_var($photo, FILTER_VALIDATE_URL))
@@ -766,6 +803,7 @@ class telegramBot
      */
     public function sendInvoice($chat_id, $title, $description, $payload, $provider_token, $start_parameter, $currency, $prices, $photo_url = null, $photo_size = null, $photo_width = null, $photo_height = null, $need_name = false, $need_email = false, $need_shipping_address = false, $is_flexible = false, $disable_notification = false, $reply_to_message_id = null, $reply_markup = null)
     {
+        $prices = json_encode($prices);
         $params = array_filter(compact('chat_id', 'title', 'description', 'payload', 'provider_token', 'start_parameter', 'currency', 'prices', 'photo_url', 'photo_size', 'photo_width', 'photo_height', 'need_name', 'need_email', 'need_shipping_address', 'is_flexible', 'disable_notification', 'reply_to_message_id', 'reply_markup'));
         return $this->sendRequest('sendInvoice', $params);
     }
@@ -961,7 +999,7 @@ class telegramBot
      *
      * @return Array
      */
-    public function editMessageText($chat_id = null, $message_id = null, $inline_message_id = null, $text, $parse_mode = null, $disable_web_page_preview = false, $reply_markup = null)
+    public function editMessageText($text, $chat_id = null, $message_id = null, $inline_message_id = null, $parse_mode = null, $disable_web_page_preview = false, $reply_markup = null)
     {
         $params = compact('chat_id', 'message_id', 'inline_message_id', 'text', 'parse_mode', 'disable_web_page_preview', 'reply_markup');
         return $this->sendRequest('editMessageText', $params);
@@ -978,7 +1016,7 @@ class telegramBot
      *
      * @return Array
      */
-    public function editMessageCaption($chat_id = null, $message_id = null, $inline_message_id = null, $caption, $reply_markup = null)
+    public function editMessageCaption($caption, $chat_id = null, $message_id = null, $inline_message_id = null, $reply_markup = null)
     {
         $params = compact('chat_id', 'message_id', 'inline_message_id', 'caption', 'reply_markup');
         return $this->sendRequest('editMessageCaption', $params);
